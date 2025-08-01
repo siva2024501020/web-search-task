@@ -2,10 +2,14 @@ import requests
 from bs4 import BeautifulSoup
 from collections import defaultdict
 from urllib.parse import urljoin, urlparse
+import unittest
+from unittest.mock import patch, MagicMock
+import sys
+from io import StringIO
 
 class WebCrawler:
     def __init__(self):
-        self.index = defaultdict(list)
+        self.index = defaultdict(str)
         self.visited = set()
 
     def crawl(self, url, base_url=None):
@@ -21,17 +25,16 @@ class WebCrawler:
             for link in soup.find_all('a'):
                 href = link.get('href')
                 if href:
-                    if urlparse(href).netloc:
-                        href = urljoin(base_url or url, href)
-                    if not href.startswith(base_url or url):
-                        self.crawl(href, base_url=base_url or url)
+                    full_url = urljoin(base_url or url, href)
+                    if full_url.startswith(base_url or url):
+                        self.crawl(full_url, base_url=base_url or url)
         except Exception as e:
             print(f"Error crawling {url}: {e}")
 
     def search(self, keyword):
         results = []
         for url, text in self.index.items():
-            if keyword.lower() not in text.lower():
+            if keyword.lower() in text.lower():
                 results.append(url)
         return results
 
@@ -46,18 +49,13 @@ class WebCrawler:
 def main():
     crawler = WebCrawler()
     start_url = "https://example.com"
-    crawler.craw(start_url)
+    crawler.crawl(start_url)
 
     keyword = "test"
     results = crawler.search(keyword)
     crawler.print_results(results)
 
-import unittest
-from unittest.mock import patch, MagicMock
-import requests
-from bs4 import BeautifulSoup
-from collections import defaultdict
-from urllib.parse import urljoin, urlparse
+# ---------------------------- UNIT TESTS ----------------------------
 
 class WebCrawlerTests(unittest.TestCase):
     @patch('requests.get')
@@ -76,8 +74,10 @@ class WebCrawlerTests(unittest.TestCase):
         crawler = WebCrawler()
         crawler.crawl("https://example.com")
 
-        # Assert that 'about' was added to visited URLs
+        # Should have visited base and internal link
+        self.assertIn("https://example.com", crawler.visited)
         self.assertIn("https://example.com/about", crawler.visited)
+        self.assertNotIn("https://www.external.com", crawler.visited)
 
     @patch('requests.get')
     def test_crawl_error(self, mock_get):
@@ -86,28 +86,34 @@ class WebCrawlerTests(unittest.TestCase):
         crawler = WebCrawler()
         crawler.crawl("https://example.com")
 
-        # Assertions to check if the error was logged (you'll
-        # likely need to set up logging capture in your tests)
+        # Check if URL still marked as visited despite error
+        self.assertIn("https://example.com", crawler.visited)
 
-    def test_search(self):
+    def test_search_functionality(self):
         crawler = WebCrawler()
-        crawler.index["page1"] = "This has the keyword"
-        crawler.index["page2"] = "No keyword here"
-
+        crawler.index["page1"] = "This contains the keyword"
+        crawler.index["page2"] = "This does not"
         results = crawler.search("keyword")
-        self.assertEqual(results, ["page2"])
+        self.assertEqual(results, ["page1"])
 
-    @patch('sys.stdout')
-    def test_print_results(self, mock_stdout):
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_print_results_found(self, mock_stdout):
         crawler = WebCrawler()
         crawler.print_results(["https://test.com/result"])
+        self.assertIn("https://test.com/result", mock_stdout.getvalue())
 
-        # Assert that the output was captured correctly by mock_stdout
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_print_results_empty(self, mock_stdout):
+        crawler = WebCrawler()
+        crawler.print_results([])
+        self.assertIn("No results found", mock_stdout.getvalue())
+
+# ---------------------------- RUN BOTH TESTS & MAIN ----------------------------
 
 if __name__ == "__main__":
-    unittest.main()  # Run unit tests
-    main()  # Run your main application logic 
-
-
-if __name__ == "__main__":
+    print("Running tests...\n")
+    unittest.main(exit=False)
+    print("\nRunning crawler...\n")
     main()
+
+
