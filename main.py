@@ -8,6 +8,9 @@ import sys
 from io import StringIO
 
 class WebCrawler:
+    """
+    WebCrawler crawls a website, indexes its text, and allows keyword search with highlighting.
+    """
     def __init__(self):
         self.index = defaultdict(str)
         self.visited = set()

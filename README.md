@@ -1,3 +1,6 @@
+## Branch Information
+
+This is the `search_results1` branch, created for ongoing development and review. Please do not merge directly to main without approval.
 ## Collaboration Guidelines
 
 - Work on a new branch for each feature or bug fix (do not commit directly to main).
