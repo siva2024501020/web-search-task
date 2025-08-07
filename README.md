@@ -1,3 +1,12 @@
+## Collaboration Guidelines
+
+- Work on a new branch for each feature or bug fix (do not commit directly to main).
+- Push your branch to GitHub and create a pull request for review.
+- Assign reviewers and request feedback before merging.
+- Ensure your code passes all tests before submitting a pull request.
+- Use clear, descriptive commit messages.
+- Update the README.md or documentation if your changes affect usage or features.
+- Communicate regularly with the team about progress and blockers.
 
 # Web Search App Project
 
