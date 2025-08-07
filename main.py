@@ -38,11 +38,22 @@ class WebCrawler:
                 results.append(url)
         return results
 
-    def print_results(self, results):
+    def print_results(self, results, keyword=None):
         if results:
             print("Search results:")
             for result in results:
-                print(f"- {result}")
+                if keyword and keyword.strip():
+                    # Highlight keyword in the result text (case-insensitive)
+                    url = result
+                    text = self.index.get(result, "")
+                    highlighted = text
+                    if keyword:
+                        import re
+                        pattern = re.compile(re.escape(keyword), re.IGNORECASE)
+                        highlighted = pattern.sub(lambda m: f"\033[93m{m.group(0)}\033[0m", text)
+                    print(f"- {url}\n  ... {highlighted.strip()[:200]} ...")
+                else:
+                    print(f"- {result}")
         else:
             print("No results found.")
 
@@ -53,7 +64,7 @@ def main():
 
     keyword = "test"
     results = crawler.search(keyword)
-    crawler.print_results(results)
+    crawler.print_results(results, keyword=keyword)
 
 # ---------------------------- UNIT TESTS ----------------------------
 
